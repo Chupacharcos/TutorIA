@@ -1,0 +1,15 @@
+[Unit]
+Description=TutorIA FastAPI Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/var/www/tutoria
+EnvironmentFile=/var/www/tutoria/.env
+ExecStart=/var/www/chatbot/venv/bin/uvicorn api:app --host 127.0.0.1 --port 8096 --workers 1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
