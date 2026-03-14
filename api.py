@@ -6,7 +6,7 @@ app = FastAPI(title="TutorIA", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://adrianmoreno-dev.com", "http://127.0.0.1", "http://localhost"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
