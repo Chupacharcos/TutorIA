@@ -109,7 +109,14 @@ class _TutoriaLtiRequest(LtiRequest):
         self._params = params
         self._cookies = cookies
         self._secure = secure
-        self.session: dict = {}
+        self._session: dict = {}
+
+    @property
+    def session(self) -> dict:
+        # La clase base define `session` como property de solo lectura, así que
+        # hay que sobreescribirla (asignar self.session = {} lanza AttributeError).
+        # No la usamos de verdad: el estado va al CacheDataStorage (SQLite).
+        return self._session
 
     def get_param(self, key: str) -> str | None:
         return self._params.get(key)

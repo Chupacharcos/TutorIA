@@ -41,6 +41,22 @@ El frontend recupera ese contexto llamando una sola vez a `GET /tutoria/lti/sess
 > **Alcance actual:** login OIDC + launch + identificación de usuario/curso/rol.
 > **No implementado (roadmap):** Deep Linking, Names and Roles Provisioning (NRPS) y envío de notas (AGS).
 
+**Estado de validación.** El flujo está verificado de extremo a extremo con una
+plataforma simulada que reproduce lo que hace Moodle: genera su par de claves,
+publica un JWKS, inicia el login OIDC y firma un `id_token` real (RS256) con
+todos los claims del spec. El test (`tests/test_lti_flow.py`, 19 comprobaciones)
+cubre también la seguridad: rechaza tokens firmados por una clave ajena,
+`state` inválido, claims obligatorios ausentes y reutilización del `launch_id`.
+
+```bash
+python tests/test_lti_flow.py   # 19 OK · 0 fallos
+```
+
+Lo que ese test **no** puede cubrir es la configuración concreta de un Moodle
+real (URLs del centro, versión, políticas de cookies del navegador en el
+iframe). Si al integrarlo aparece algún ajuste, será en esa capa, no en la
+validación criptográfica.
+
 ### Base de conocimiento propia (RAG multi-tenant)
 
 Por defecto TutorIA responde con el conocimiento general del modelo. Si una organización sube su documentación, el tutor la usa como **material prioritario** y **cita la fuente** al final de la respuesta.

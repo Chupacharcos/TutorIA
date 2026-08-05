@@ -86,9 +86,40 @@ def _chunk_text(text: str, chunk_size: int = 900, overlap: int = 120) -> list[st
     return [c.strip() for c in chunks if len(c.strip()) > 40]
 
 
+DEMO_NS_PREFIX = "demo_"
+DEMO_NS_TTL_DAYS = 7
+
+
+def prune_demo_namespaces(ttl_days: int = DEMO_NS_TTL_DAYS) -> int:
+    """Borra los namespaces de la DEMO pública (`demo_*`) sin actividad en
+    `ttl_days`. Se llama de forma oportunista al indexar, así el disco se
+    mantiene solo sin cron ni timer que mantener. Los namespaces reales de
+    integraciones (LTI: el context_id del curso) NUNCA se tocan."""
+    import shutil
+    if not KB_ROOT.exists():
+        return 0
+    cutoff = datetime.now().timestamp() - ttl_days * 86400
+    removed = 0
+    for d in KB_ROOT.iterdir():
+        if not d.is_dir() or not d.name.startswith(DEMO_NS_PREFIX):
+            continue
+        try:
+            if d.stat().st_mtime < cutoff:
+                shutil.rmtree(d, ignore_errors=True)
+                _index_cache.pop(d.name, None)
+                removed += 1
+        except Exception:
+            continue
+    return removed
+
+
 def ingest_document(namespace: str, file_path: str, source_name: str) -> dict:
     """Indexa un documento en la base de conocimiento del namespace.
     Persiste en disco inmediatamente. Devuelve {source_id, chunks_added, total_chunks}."""
+    try:
+        prune_demo_namespaces()  # housekeeping oportunista, nunca bloquea la subida
+    except Exception:
+        pass
     fp = Path(file_path)
     text = _extract_text(fp)
     chunk_texts = _chunk_text(text)
