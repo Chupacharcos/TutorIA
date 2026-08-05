@@ -7,3 +7,4 @@ artifacts/
 
 knowledge_base_data/
 lti_keys/private.key
+lti_keys/*.db
