@@ -300,6 +300,22 @@ def lti_session(launch_id: str):
 
 @router.get("/lti/jwks")
 def lti_jwks():
-    """Clave pública de la herramienta (requerida por el spec LTI 1.3)."""
-    tool_conf = _tool_config()
-    return tool_conf.get_jwks()
+    """Clave pública de la herramienta (requerida por el spec LTI 1.3).
+
+    Debe funcionar SIEMPRE, incluso sin plataformas registradas: Moodle valida
+    esta URL en el momento de dar de alta la herramienta, que es justo ANTES de
+    que exista el client_id con el que registrarla aquí (problema del huevo y
+    la gallina). Se construye directamente desde lti_keys/public.key."""
+    try:
+        tool_conf = _tool_config()
+        jwks = tool_conf.get_jwks()
+        if jwks.get("keys"):
+            return jwks
+    except HTTPException:
+        pass  # aún sin plataformas: caemos al JWKS derivado de la clave pública
+
+    from pylti1p3.registration import Registration
+    pub_path = BASE_DIR / "lti_keys" / "public.key"
+    if not pub_path.exists():
+        raise HTTPException(503, "Falta lti_keys/public.key — genera el par de claves de la herramienta")
+    return {"keys": [Registration.get_jwk(pub_path.read_text())]}
