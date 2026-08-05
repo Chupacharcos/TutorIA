@@ -4,3 +4,6 @@ __pycache__/
 .env
 *.log
 artifacts/
+
+knowledge_base_data/
+lti_keys/private.key

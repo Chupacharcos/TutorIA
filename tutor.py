@@ -1,5 +1,13 @@
 """
 TutorIA — Motor de tutoría adaptativa con LangChain + Groq/LLaMA
+
+RAG multi-tenant (2026-07-28): si la sesión lleva un `namespace` (organización
+o curso — en LTI es el context_id de Moodle, ver lti.py) y esa organización ha
+subido documentación propia (knowledge_base.py), el tutor la usa como material
+de referencia PRIORITARIO sobre el conocimiento general del modelo, y cada
+respuesta declara qué fuente(s) concreta(s) consultó. Sin namespace o sin
+documentos indexados, el comportamiento es IDÉNTICO al anterior (solo LLM +
+memoria conversacional) — no rompe la demo pública ni ningún uso existente.
 """
 import os
 import re
@@ -7,6 +15,8 @@ from langchain_groq import ChatGroq
 from langchain_classic.memory import ConversationSummaryBufferMemory
 from langchain_classic.chains import ConversationChain
 from langchain_core.prompts import PromptTemplate
+
+import knowledge_base as kb
 
 # ── Detector de frustración ───────────────────────────────────────────────────
 
@@ -123,7 +133,29 @@ def get_or_create_session(session_id: str, profile: dict) -> dict:
     return _sessions[session_id]
 
 
-def chat(session_id: str, message: str, profile: dict) -> dict:
+def _build_reference_block(namespace: str | None, message: str) -> tuple[str, list[dict]]:
+    """Si el namespace tiene base de conocimiento, recupera los chunks
+    relevantes para `message` y devuelve (bloque_de_texto, fuentes_usadas).
+    Bloque vacío si no hay namespace o no hay documentos indexados."""
+    if not namespace or not kb.has_knowledge_base(namespace):
+        return "", []
+    chunks = kb.retrieve(namespace, message, top_k=4)
+    if not chunks:
+        return "", []
+    lines = [
+        "[MATERIAL DE REFERENCIA proporcionado por la organización — "
+        "prioriza esta información sobre tu conocimiento general cuando sea "
+        "relevante para la pregunta del alumno. No la menciones literalmente "
+        "ni cites el nombre del fichero en tu respuesta, solo úsala.]"
+    ]
+    seen_sources: dict[str, dict] = {}
+    for c in chunks:
+        lines.append(f"- {c['text'][:500]}")
+        seen_sources.setdefault(c["source_id"], {"source_id": c["source_id"], "source_name": c["source_name"]})
+    return "\n".join(lines), list(seen_sources.values())
+
+
+def chat(session_id: str, message: str, profile: dict, namespace: str | None = None) -> dict:
     session = get_or_create_session(session_id, profile)
     session["turn_count"] += 1
 
@@ -158,8 +190,21 @@ def chat(session_id: str, message: str, profile: dict) -> dict:
     elif frustration_active:
         enhanced = f"[El alumno muestra frustración persistente. Primero valida sus sentimientos con empatía antes de continuar.] {message}"
 
+    # ── RAG multi-tenant: material de referencia de la organización ───────
+    # Se antepone al input (mismo mecanismo que los prefijos de arriba) para
+    # no tocar el PromptTemplate ya construido por sesión. Determinista: las
+    # fuentes citadas al final vienen del código, no de que el LLM "recuerde"
+    # citarlas — así nunca se inventan referencias que no se usaron de verdad.
+    reference_block, sources_used = _build_reference_block(namespace, message)
+    if reference_block:
+        enhanced = f"{reference_block}\n\n{enhanced}"
+
     response = session["chain"].invoke({"input": enhanced})
     reply = response["response"] if isinstance(response, dict) else str(response)
+
+    if sources_used:
+        names = ", ".join(s["source_name"] for s in sources_used)
+        reply = f"{reply}\n\n📎 Fuente: {names}"
 
     return {
         "reply": reply,
@@ -167,6 +212,7 @@ def chat(session_id: str, message: str, profile: dict) -> dict:
         "session_id": session_id,
         "frustration_detected": frustration_active,
         "error_topic": error_topic,
+        "sources": sources_used,
     }
 
 

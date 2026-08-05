@@ -1,0 +1,17 @@
+{
+  "_comentario": "Registro de plataformas Moodle autorizadas a lanzar TutorIA como herramienta LTI 1.3 External Tool. VACÍO por defecto (ninguna plataforma real registrada aún) — así /tutoria/lti/login rechaza cualquier intento hasta que un administrador Moodle se registre aquí. Añade una entrada por cada Moodle que instale TutorIA. Ver README.md sección 'Integración LTI 1.3 con Moodle' para el proceso completo paso a paso.",
+  "_ejemplo": [
+    {
+      "default": true,
+      "client_id": "CLIENT_ID_QUE_TE_DA_MOODLE",
+      "auth_login_url": "https://tu-moodle.example.com/mod/lti/auth.php",
+      "auth_token_url": "https://tu-moodle.example.com/mod/lti/token.php",
+      "auth_audience": null,
+      "key_set_url": "https://tu-moodle.example.com/mod/lti/certs.php",
+      "key_set": null,
+      "private_key_file": "lti_keys/private.key",
+      "public_key_file": "lti_keys/public.key",
+      "deployment_ids": ["1"]
+    }
+  ]
+}
