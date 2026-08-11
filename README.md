@@ -4,6 +4,34 @@ Aplicación web de tutoría adaptativa con IA para niños de 6 a 14 años. La IA
 
 **Licencia:** MIT (ver [LICENSE](LICENSE)) — uso libre, incluido comercial, manteniendo el aviso de copyright. Sin garantía ni soporte incluidos.
 
+<!-- LOOP-MAP:START (generado por `php artisan project:loop readme` — no editar a mano) -->
+
+## El bucle que cierra
+
+<p align="center"><img src="https://adrianmoreno-dev.com/bucle/tutor-ia.svg" alt="Mapa del bucle de TutorIA" width="900"></p>
+
+**Para** un niño de 6 a 14 años y quien le acompaña con los deberes · **Cada sesión de deberes**
+
+| Etapa | Qué pasa | Quién |
+|---|---|---|
+| **1. Disparador** | El niño se atasca con un ejercicio y en casa ya no sabemos cómo explicárselo de otra forma. | persona |
+| **2. Acción** | Ajusta el lenguaje, el ritmo y el tipo de ejercicio al perfil elegido (TDAH, dislexia, bajo rendimiento) y recuerda la sesión anterior. | software |
+| **3. Medición** | El resumen de la sesión y los errores que se repiten, que hacen cambiar la manera de explicarlo. | software |
+| **4. Decisión** | Decidimos si seguimos con ese tema, bajamos un escalón o lo dejamos para otro día. | persona |
+
+### Lo que no hace
+
+- No diagnostica nada: el perfil de aprendizaje lo eliges tú, no lo detecta la IA.
+- En el perfil de dislexia no corrige la ortografía: está evitado a propósito.
+- No recuerda la conversación entera: entre sesiones guarda un resumen, no lo que se dijo.
+
+### Por qué está construido así
+
+- **Memoria de resumen entre sesiones** en vez de guardar la conversación completa — El niño no tiene que volver a contar sus dificultades cada vez, y el contexto no crece hasta reventar el límite del modelo.
+- **Perfiles cerrados en vez de un prompt único** en vez de un solo prompt para todos los alumnos — Cada perfil cambia la longitud de la respuesta, el tamaño del paso y si se corrige la ortografía. Con un prompt único no se puede.
+
+<!-- LOOP-MAP:END -->
+
 ## Demo en vivo
 
 [adrianmoreno-dev.com/demo/tutor-ia](https://adrianmoreno-dev.com/demo/tutor-ia)
